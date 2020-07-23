@@ -51,13 +51,14 @@ bool bGravityOn;
 
 bool gotZap;
 bool gotZop;
+bool primeZip;
 
 #define ZIP_DELAY 500
 Timer zipTimer;
 
 void setup() {
   // put your setup code here, to run once:
-
+zipTimer.set(ZIP_DELAY);
 }
 
 void loop() {
@@ -116,16 +117,14 @@ if (bChangeRole) {
         buddyFace = f;
         gotDirection = false;
         gotZip = true;
-     
         }
-       
-      
+   
        if(getLastValueReceivedOnFace(f) == LEFT_UP){
         bFace = (f + 1) % 6;
         gotZip = false;
         gotDirection = true;
-
         }
+        
        else if(getLastValueReceivedOnFace(f) == RIGHT_UP){
         bFace = (f + 5) % 6;
         gotZip = false;
@@ -136,7 +135,6 @@ if (bChangeRole) {
         bFace = f;
         gotZip = false;
         gotDirection = true;
-
         } 
       } 
     }
@@ -147,21 +145,56 @@ if (bChangeRole) {
   ruFace = (bFace + 4) % 6;
   rdFace = (bFace + 5) % 6;
 
-    setColorOnFace(WHITE, bFace);
-    setColorOnFace(GREEN, tFace);
+    
 
     if(gotZip == true){
          setValueSentOnFace(ZAP, buddyFace);
       }
     if(gotDirection == true){
       setValueSentOnFace(ZOP, buddyFace);
+      broadcast();
       }
+
+      setColorOnFace(WHITE, bFace);
+      setColorOnFace(GREEN, tFace);
 //
 //      setValueSentOnAllFaces(NOTHING);
 //
 //      setValueSentOnFace(LEFT_UP, luFace);
 //      setValueSentOnFace(RIGHT_UP, ruFace);
 //      setValueSentOnFace(TOP, tFace);
+  }
+
+void broadcast(){
+  setValueSentOnFace(ZIP, luFace);
+  setValueSentOnFace(ZIP, tFace);
+  setValueSentOnFace(ZIP, ruFace);
+
+ FOREACH_FACE(f){
+    if(!isValueReceivedOnFaceExpired(f)){
+      if(getLastValueReceivedOnFace(f) == ZAP)
+        gotZop = false;
+        gotZap = true;
+      }
+      if(getLastValueReceivedOnFace(f) == ZOP){
+
+        gotZap = false;
+        gotZop = true;
+        }
+    }
+
+//and these faces will send out information
+ 
+ if(gotZap == true){
+  setValueSentOnFace(LEFT_UP, luFace);
+  setValueSentOnFace(RIGHT_UP, ruFace);
+  setValueSentOnFace(TOP, tFace);
+      }
+
+ if(gotZop == true){
+//cool cool you can chill
+  } 
+  
   }
 
 
@@ -211,7 +244,7 @@ if (bChangeRole) {
   byte bucketCount = 0;
   bGravityOn = false;
   
-  setColor(CYAN);
+//  setColor(CYAN);
 
   FOREACH_FACE(f){
     if(!isValueReceivedOnFaceExpired(f)){ //I have a neighbor
@@ -307,40 +340,48 @@ declareGravity();
   luFace = (bFace + 2) % 6;
   tFace = (bFace + 3) % 6;
   ruFace = (bFace + 4) % 6;
-  rdFace = (bFace + 5) % 6;
+  rdFace = (bFace + 5) % 6;  
 
-//and the face pointing in the direction of gravity will turn white
-  setColorOnFace(WHITE, bFace);
+if(!zipTimer.isExpired()){
+  setColor(CYAN);
+  } else if (zipTimer.isExpired()){
+    primeZip = true;
+  }
 
-  //Add a timer to start the zip
-  setValueSentOnAllFaces(ZIP);
 
+  
   FOREACH_FACE(f){
     if(!isValueReceivedOnFaceExpired(f)){
       if(getLastValueReceivedOnFace(f) == ZAP)
+        primeZip = false;
         gotZop = false;
         gotZap = true;
       }
       if(getLastValueReceivedOnFace(f) == ZOP){
-      gotZap = false;
-      gotZop = true;
-        
+        primeZip = false;
+        gotZap = false;
+        gotZop = true;
         }
     }
 
-  
-
 //and these faces will send out information
+ if(primeZip == true){
+  setValueSentOnAllFaces(ZIP);
+  }
+ 
  if(gotZap == true){
-  
   setValueSentOnFace(LEFT_UP, luFace);
   setValueSentOnFace(RIGHT_UP, ruFace);
   setValueSentOnFace(TOP, tFace);
       }
 
  if(gotZop == true){
+  zipTimer.set(ZIP_DELAY);
+  }  
 
-  }    
+
+
+  setColorOnFace(WHITE, bFace);
   }
 
  }
