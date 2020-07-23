@@ -21,8 +21,15 @@ byte ruFace;
 byte rdFace;
 
 bool detached;
+bool listening = false;
 
-enum signalStates {IM_BUCKET, TOP, LEFT_UP, RIGHT_UP, NOTHING};
+enum signalStates {IM_BUCKET, TOP, LEFT_UP, RIGHT_UP, NOTHING, ZIP, ZAP, ZOP};
+
+//PEG
+bool gotZip = false;
+bool gotDirection = false;
+
+byte buddyFace;
 
 //BUCKET
 enum playerRoles {PLAYER1, PLAYER2};
@@ -41,6 +48,12 @@ bool bFace5 = false;
 
 byte gravityFace;
 bool bGravityOn;
+
+bool gotZap;
+bool gotZop;
+
+#define ZIP_DELAY 500
+Timer zipTimer;
 
 void setup() {
   // put your setup code here, to run once:
@@ -98,15 +111,32 @@ if (bChangeRole) {
 
   FOREACH_FACE(f){
     if(!isValueReceivedOnFaceExpired(f)){ //I have a neighbor
+
+      if(getLastValueReceivedOnFace(f) == ZIP){
+        buddyFace = f;
+        gotDirection = false;
+        gotZip = true;
+     
+        }
+       
       
        if(getLastValueReceivedOnFace(f) == LEFT_UP){
         bFace = (f + 1) % 6;
+        gotZip = false;
+        gotDirection = true;
+
         }
        else if(getLastValueReceivedOnFace(f) == RIGHT_UP){
         bFace = (f + 5) % 6;
+        gotZip = false;
+        gotDirection = true;
+
         }
        else if(getLastValueReceivedOnFace(f) == TOP){ //we're checking for Top last because it's the most important value
         bFace = f;
+        gotZip = false;
+        gotDirection = true;
+
         } 
       } 
     }
@@ -120,11 +150,18 @@ if (bChangeRole) {
     setColorOnFace(WHITE, bFace);
     setColorOnFace(GREEN, tFace);
 
-      setValueSentOnAllFaces(NOTHING);
-
-      setValueSentOnFace(LEFT_UP, luFace);
-      setValueSentOnFace(RIGHT_UP, ruFace);
-      setValueSentOnFace(TOP, tFace);
+    if(gotZip == true){
+         setValueSentOnFace(ZAP, buddyFace);
+      }
+    if(gotDirection == true){
+      setValueSentOnFace(ZOP, buddyFace);
+      }
+//
+//      setValueSentOnAllFaces(NOTHING);
+//
+//      setValueSentOnFace(LEFT_UP, luFace);
+//      setValueSentOnFace(RIGHT_UP, ruFace);
+//      setValueSentOnFace(TOP, tFace);
   }
 
 
@@ -275,13 +312,35 @@ declareGravity();
 //and the face pointing in the direction of gravity will turn white
   setColorOnFace(WHITE, bFace);
 
-//we don't want any contradictory signals sent out, so NOTHING is the default
-  setValueSentOnAllFaces(NOTHING);
+  //Add a timer to start the zip
+  setValueSentOnAllFaces(ZIP);
+
+  FOREACH_FACE(f){
+    if(!isValueReceivedOnFaceExpired(f)){
+      if(getLastValueReceivedOnFace(f) == ZAP)
+        gotZop = false;
+        gotZap = true;
+      }
+      if(getLastValueReceivedOnFace(f) == ZOP){
+      gotZap = false;
+      gotZop = true;
+        
+        }
+    }
+
+  
 
 //and these faces will send out information
+ if(gotZap == true){
+  
   setValueSentOnFace(LEFT_UP, luFace);
   setValueSentOnFace(RIGHT_UP, ruFace);
   setValueSentOnFace(TOP, tFace);
       }
+
+ if(gotZop == true){
+
+  }    
+  }
 
  }
